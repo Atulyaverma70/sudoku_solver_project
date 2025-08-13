@@ -1,9 +1,13 @@
 import cv2
 import pytesseract
 import numpy as np
+import sys
+import os
 
-# Set Tesseract path (Uncomment for Windows)
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+if os.name == "nt":  # Windows
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:  # Linux / Docker
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 def order_points(pts):
     rect = np.zeros((4, 2), dtype="float32")
