@@ -9,6 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # System deps for OpenCV + Tesseract
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
+    libtesseract-dev \
     libglib2.0-0 \
     libsm6 \
     libxrender1 \
@@ -26,6 +27,9 @@ RUN python -m pip install --upgrade pip && \
 
 # Copy the rest of the source
 COPY . .
+
+# Create uploads folder with proper permissions
+RUN mkdir -p /app/uploads && chmod -R 777 /app/uploads
 
 # Expose the container's app port
 EXPOSE 5000
