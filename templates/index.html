@@ -4,14 +4,12 @@
     <title>Sudoku Solver</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
     <div class="container">
         <h1>Sudoku Solver</h1>
         <p class="instructions">
-            You can solve a Sudoku in two ways:<br>
             1️⃣ Upload an image of the Sudoku puzzle.<br>
-            2️⃣ Enter the numbers directly into the grid.
+            2️⃣ Enter numbers directly into the grid.
         </p>
 
         <div class="grid-container">
@@ -20,15 +18,9 @@
 
         <div class="controls">
             <input type="file" id="sudokuImage" accept="image/*" hidden>
-            <button class="btn upload-btn" onclick="document.getElementById('sudokuImage').click()">
-                📷 Upload Image
-            </button>
-            <button class="btn solve-btn" onclick="solveSudoku()">
-                🧩 Solve
-            </button>
-            <button class="btn clear-btn" onclick="clearGrid()">
-                ❌ Clear
-            </button>
+            <button class="btn upload-btn" onclick="document.getElementById('sudokuImage').click()">📷 Upload Image</button>
+            <button class="btn solve-btn" onclick="solveSudoku()">🧩 Solve</button>
+            <button class="btn clear-btn" onclick="clearGrid()">❌ Clear</button>
         </div>
 
         <div id="message" class="message"></div>
@@ -69,7 +61,7 @@
             });
 
             try {
-                const response = await fetch('http://localhost:5000/solve', {
+                const response = await fetch('/solve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ grid })
@@ -82,7 +74,7 @@
                             inputs[i * 9 + j].value = num || '';
                         });
                     });
-                    showMessage('Sudoku solved! Ready for another? Clear this one first to continue the challenge.', 'success');
+                    showMessage('Sudoku solved!', 'success');
                 } else {
                     showMessage(data.error || 'Failed to solve', 'error');
                 }
@@ -98,7 +90,7 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await fetch('http://localhost:5000/upload', {
+                const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -109,7 +101,7 @@
                         const val = data.grid[Math.floor(index / 9)][index % 9];
                         input.value = val !== 0 ? val : '';
                     });
-                    showMessage('Successfully extracted the grid!', 'success');
+                    showMessage('Grid extracted!', 'success');
                 } else {
                     showMessage(data.error || 'Image processing failed', 'error');
                 }
