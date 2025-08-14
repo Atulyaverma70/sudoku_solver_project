@@ -1,25 +1,30 @@
-name: Deploy to AWS
-
-on:
-  push:
-    branches: [ "main" ]
+# .github/workflows/aws.yaml (relevant parts)
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: self-hosted
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: ECR login
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} \
-          | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO }}
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      - name: Pull latest image & restart container
+      # 👇 This logs in to ECR without needing aws cli
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push
+        env:
+          ECR_REPO: ${{ secrets.ECR_REPO }}   # full URI
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker pull ${{ secrets.ECR_REPO }}:latest
-          docker stop sudoku-container || true
-          docker rm sudoku-container || true
-          docker run -d -p 5080:5000 --name sudoku-container ${{ secrets.ECR_REPO }}:latest
+          docker build -t app:${IMAGE_TAG} .
+          docker tag app:${IMAGE_TAG} "${ECR_REPO}:${IMAGE_TAG}"
+          docker push "${ECR_REPO}:${IMAGE_TAG}"
+
+      # … your stop old container / run new container steps …
