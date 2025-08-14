@@ -1,8 +1,9 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-uploads/
-.env
 .git
 .github
+.vscode
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.log
+uploads/
