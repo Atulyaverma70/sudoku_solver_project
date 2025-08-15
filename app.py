@@ -1,45 +1,50 @@
 import os
 import cv2
 import numpy as np
+import pytesseract
+import boto3
+import config
+
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 
 # --- Flask setup ---
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Upload folder
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(config.UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB limit
 
 # Allowed image extensions
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
+# AWS Rekognition client (credentials auto-read from env)
+rekognition = boto3.client(
+    "rekognition",
+    region_name=config.REGION_NAME
+)
 
 # --- Utils ---
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-import pytesseract
-import cv2
-import numpy as np
 
 def extract_sudoku_from_image(image_path):
     # Load and preprocess
     img = cv2.imread(image_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                   cv2.THRESH_BINARY_INV, 11, 2)
+    thresh = cv2.adaptiveThreshold(
+        blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV, 11, 2
+    )
 
-    # Find contours
+    # Find largest 4-point contour
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
-    
+
     sudoku_contour = None
     for c in contours:
         peri = cv2.arcLength(c, True)
@@ -66,7 +71,8 @@ def extract_sudoku_from_image(image_path):
         [0, 0],
         [side - 1, 0],
         [side - 1, side - 1],
-        [0, side - 1]], dtype="float32")
+        [0, side - 1]
+    ], dtype="float32")
 
     M = cv2.getPerspectiveTransform(rect, dst)
     warp = cv2.warpPerspective(gray, M, (side, side))
@@ -91,20 +97,10 @@ def extract_sudoku_from_image(image_path):
     return grid
 
 def solve_sudoku(grid):
-    """
-    Backtracking Sudoku solver.
-    grid: 9x9 list of ints.
-    Returns solved grid or None if no solution.
-    """
-
+    """Backtracking Sudoku solver."""
     def is_valid(num, row, col):
-        # Check row
-        if num in grid[row]:
-            return False
-        # Check col
-        if num in [grid[i][col] for i in range(9)]:
-            return False
-        # Check box
+        if num in grid[row]: return False
+        if num in [grid[i][col] for i in range(9)]: return False
         start_row, start_col = 3 * (row // 3), 3 * (col // 3)
         for i in range(start_row, start_row + 3):
             for j in range(start_col, start_col + 3):
@@ -125,21 +121,16 @@ def solve_sudoku(grid):
                     return False
         return True
 
-    if backtrack():
-        return grid
-    return None
-
+    return grid if backtrack() else None
 
 # --- Routes ---
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
 @app.route("/healthz")
 def healthz():
     return jsonify({"status": "ok"}), 200
-
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -147,7 +138,6 @@ def upload():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
-
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
@@ -155,7 +145,6 @@ def upload():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(filepath)
-
         try:
             grid = extract_sudoku_from_image(filepath)
             return jsonify({"grid": grid})
@@ -164,27 +153,19 @@ def upload():
     else:
         return jsonify({"error": "Invalid file type"}), 400
 
-
 @app.route("/solve", methods=["POST"])
 def solve():
-    data = request.get_json(force=True)  # force=True to always parse JSON
+    data = request.get_json(force=True)
     if not data or "grid" not in data:
         return jsonify({"error": "Missing Sudoku grid"}), 400
 
-    grid = data["grid"]
-
     try:
-        solved = solve_sudoku(grid)
-        if solved:
-            return jsonify({"solved_grid": solved})
-        else:
-            return jsonify({"error": "No solution found"}), 400
+        solved = solve_sudoku(data["grid"])
+        return jsonify({"solved_grid": solved}) if solved else (jsonify({"error": "No solution found"}), 400)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
 # --- Main entry ---
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", config.APP_PORT))
+    app.run(host=config.APP_HOST, port=port, debug=False)
