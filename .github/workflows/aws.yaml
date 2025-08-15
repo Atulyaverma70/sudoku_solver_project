@@ -2,7 +2,7 @@ name: Build & Deploy to EC2 via ECR
 
 on:
   push:
-    branches: [ "main" ]   # change if your default branch is different
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -11,14 +11,14 @@ jobs:
 
     env:
       # Secrets:
-      ECR_REPO: ${{ secrets.ECR_REPO }}         # full URI: 123456789012.dkr.ecr.us-east-1.amazonaws.com/vehicleproj
+      ECR_REPO: ${{ secrets.ECR_REPO }}
       AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       # Tag and container config:
       IMAGE_TAG: ${{ github.sha }}
       CONTAINER_NAME: sudoku-app
-      CONTAINER_PORT: "8000"    # change if your app listens on a different internal port
-      HOST_PORT: "80"           # change host port if 80 is in use
+      CONTAINER_PORT: "5000"    # Match Flask's port
+      HOST_PORT: "80"           # External port
 
     steps:
       - name: Checkout
@@ -31,7 +31,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ✅ ECR login without AWS CLI on the runner
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -50,4 +49,15 @@ jobs:
       - name: Pull and run new container
         run: |
           docker pull "${ECR_REPO}:${IMAGE_TAG}"
-          docker run -d --name "${CONTAINER_NAME}" -p ${HOST_PORT}:${CONTAINER_PORT} "${ECR_REPO}:${IMAGE_TAG}"
+          docker run -d \
+            --name "${CONTAINER_NAME}" \
+            -p ${HOST_PORT}:5000 \  # Map to container's 5000 port
+            -v /app/uploads \      # Persistent storage for uploads
+            "${ECR_REPO}:${IMAGE_TAG}"
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for container to initialize..."
+          sleep 15
+          curl --fail http://localhost:${HOST_PORT}/healthz || exit 1
+          echo "Health check passed!"
