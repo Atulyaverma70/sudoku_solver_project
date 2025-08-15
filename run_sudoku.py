@@ -1,3 +1,4 @@
+from ocr_processing import extract_sudoku_grid
 image_path = "_uploaded_sudoku.jpg"  # Change this to your image file
 grid = extract_sudoku_grid(image_path)
 

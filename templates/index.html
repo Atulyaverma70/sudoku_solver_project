@@ -28,6 +28,11 @@
     </div>
 
     <script>
+        // Auto-detect API URL for local vs production
+        const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+            ? "" // local dev, served by Flask
+            : "https://api.yourdomain.com"; // replace with your actual AWS API endpoint
+
         function createGrid() {
             const grid = document.getElementById('sudokuGrid');
             for (let i = 0; i < 9; i++) {
@@ -62,7 +67,7 @@
             });
 
             try {
-                const response = await fetch('/solve', {
+                const response = await fetch(`${API_BASE}/solve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ grid })
@@ -91,7 +96,7 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await fetch('/upload', {
+                const response = await fetch(`${API_BASE}/upload`, {
                     method: 'POST',
                     body: formData
                 });

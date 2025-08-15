@@ -2,32 +2,33 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f8f9fa, #e3f2fd);
+    background: linear-gradient(135deg, #eef2f3, #dbe9f4);
     color: #333;
     display: flex;
-    justify-content: center;  /* Center horizontally */
-    align-items: center;      /* Center vertically */
-    min-height: 100vh;        /* Full height viewport */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
 /* ===== Container Styling ===== */
 .container {
     background: #ffffff;
-    padding: 25px 30px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
     text-align: center;
-    max-width: 450px;
+    max-width: 480px;
     width: 100%;
-    animation: fadeIn 0.6s ease-in-out;
+    animation: fadeIn 0.5s ease-in-out;
 }
 
 /* ===== Title ===== */
 .container h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     margin-bottom: 20px;
-    color: #1976d2;
+    color: #1565c0;
     letter-spacing: 1px;
+    font-weight: 600;
 }
 
 /* ===== Sudoku Grid ===== */
@@ -39,22 +40,25 @@ body {
 
 #sudokuGrid {
     border-collapse: collapse;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 #sudokuGrid td {
-    border: 2px solid #000;  /* Bold, dark borders for all cells */
-    width: 40px;
-    height: 40px;
+    border: 2px solid #444;
+    width: 42px;
+    height: 42px;
     padding: 0;
     text-align: center;
+    background-color: #fafafa;
+    transition: background-color 0.3s ease;
 }
 
 #sudokuGrid td.thick-right {
-    border-right: 4px solid #000; /* Thicker right border for 3x3 blocks */
+    border-right: 4px solid #000;
 }
 
 #sudokuGrid td.thick-bottom {
-    border-bottom: 4px solid #000; /* Thicker bottom border for 3x3 blocks */
+    border-bottom: 4px solid #000;
 }
 
 #sudokuGrid input {
@@ -65,31 +69,33 @@ body {
     font-size: 1.2rem;
     background: transparent;
     color: #333;
+    transition: background-color 0.2s ease, font-weight 0.2s ease;
 }
 
 #sudokuGrid input:focus {
     outline: none;
-    background: #e3f2fd;
+    background: #dceefc;
     font-weight: bold;
 }
 
 /* ===== Buttons ===== */
 .controls {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     margin-top: 15px;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .btn {
-    padding: 10px 16px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, background-color 0.3s ease;
     font-weight: 500;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .upload-btn {
@@ -109,13 +115,13 @@ body {
 
 .btn:hover {
     transform: translateY(-2px);
-    opacity: 0.9;
+    opacity: 0.92;
 }
 
 /* ===== Status Messages ===== */
 .message {
     margin-top: 15px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: 6px;
     font-size: 0.95rem;
     display: inline-block;
@@ -123,7 +129,7 @@ body {
 
 .message.info {
     background-color: #e3f2fd;
-    color: #1976d2;
+    color: #1565c0;
 }
 
 .message.success {
@@ -138,15 +144,15 @@ body {
 
 /* ===== Animations ===== */
 @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
+    from { opacity: 0; transform: scale(0.96); }
     to { opacity: 1; transform: scale(1); }
 }
 
 /* ===== Responsive Design ===== */
 @media (max-width: 500px) {
     #sudokuGrid td {
-        width: 35px;
-        height: 35px;
+        width: 36px;
+        height: 36px;
     }
     #sudokuGrid input {
         font-size: 1rem;
