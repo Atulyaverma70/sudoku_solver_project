@@ -5,4 +5,5 @@ pytesseract
 numpy
 requests
 gunicorn
+boto3
 
